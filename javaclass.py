@@ -670,11 +670,11 @@ class code_attribute(object):
         self.exception_table_length, = struct.unpack(fmt, buf)
         
         self.exception_table = []
-        for i in range(1, self.exception_table_length):
+        for i in range(0, self.exception_table_length):
             fmt = ">HHHH"
             buf = f.read(struct.calcsize(fmt))
             start_pc, end_pc, handler_pc, catch_type, = struct.unpack(fmt, buf)
-            self.exeception_table.append({
+            self.exception_table.append({
                 "start_pc"  : start_pc, 
                 "end_pc"    : end_pc, 
                 "handler_pc": handler_pc, 
@@ -686,7 +686,7 @@ class code_attribute(object):
         self.attributes_count, = struct.unpack(fmt, buf)
 
         self.attributes = []
-        for i in range(1, self.attributes_count):
+        for i in range(0, self.attributes_count):
             self.attributes.append(read_attribute_info(f))
 
 

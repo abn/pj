@@ -1,4 +1,4 @@
-# beware! ere be dragons!  import sys
+
 import struct
 import javaclass
 
@@ -44,16 +44,38 @@ def cplookup(cp, index):
         return str(int_val)
 
     elif cp[index].tag == javaclass.CONSTANT_Float:
-        # FIXME 
-        raise RuntimeError("Not implemented: float")
+        # FIXME: 
+        #
+        # Tried to implement this for double and was getting incorrect 
+        # results. Float "should" work ok but will keep it in raw 
+        # format to be consistent with how double is handled.
+        return ''.join(hex(b) for b in cp[index].info)
 
     elif cp[index].tag == javaclass.CONSTANT_Long:
-        high_bytes, low_bytes, = struct.unpack(">ll", str(cp[index].info))
+        high_bytes, low_bytes, = struct.unpack(">ii", str(cp[index].info))
         return str(long((high_bytes << 32) + low_bytes))
 
     elif cp[index].tag == javaclass.CONSTANT_Double:
-        # FIXME
-        raise RuntimeError("Not implemented: double")
+        return ''.join(hex(b) for b in cp[index].info)
+    
+        # FIXME: 
+        #
+        # Produces incorrect results. Is this due to Python 
+        # and no double precision numbers?  Will process
+        # floats and doubles in raw form.
+        #
+        #high_bytes, low_bytes, = struct.unpack(">ii", str(cp[index].info))
+        #bits = long(high_bytes << 32) + low_bytes
+        #sign = -1
+        #if bits >> 63 == 0:
+        #    sign = 1
+        #
+        #e = int((bits >> 52) & 0x7ffL);
+        #m = long(bits & 0xfffffffffffffL) << 1
+        #if e == 0:
+        #    m = long((bits & 0xfffffffffffffL) | 0x10000000000000L)
+        #val = sign * m * 2**(e-1075)
+        #return str(val)
 
     elif cp[index].tag == javaclass.CONSTANT_NameAndType:
         name_index, descriptor, = struct.unpack(">HH", str(cp[index].info))
