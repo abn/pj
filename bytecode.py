@@ -1,6 +1,6 @@
 
 import struct
-import javaclass
+import classutils
 
 def cpindex(byte1, byte2):
     """
@@ -18,32 +18,32 @@ def cplookup(cp, index):
     if index not in cp:
         raise RuntimeError("Invalid index to constant pool")
 
-    if cp[index].tag == javaclass.CONSTANT_Class:
+    if cp[index].tag == classutils.CONSTANT_Class:
         name_index, = struct.unpack(">H", str(cp[index].info))
         return cplookup(cp, name_index)
         
-    elif cp[index].tag == javaclass.CONSTANT_FieldRef:
+    elif cp[index].tag == classutils.CONSTANT_FieldRef:
         class_index, name_and_type_index, = struct.unpack(">HH", str(cp[index].info))
         return ".".join([cplookup(cp, class_index),cplookup(cp, name_and_type_index)])
 
-    elif cp[index].tag == javaclass.CONSTANT_MethodRef:
+    elif cp[index].tag == classutils.CONSTANT_MethodRef:
 
         class_index, name_and_type_index, = struct.unpack(">HH", str(cp[index].info))
         return ".".join([cplookup(cp, class_index),cplookup(cp, name_and_type_index)])
 
-    elif cp[index].tag == javaclass.CONSTANT_InterfaceMethodref:
+    elif cp[index].tag == classutils.CONSTANT_InterfaceMethodref:
         class_index, name_and_type_index, = struct.unpack(">HH", str(cp[index].info))
         return ".".join([cplookup(cp, class_index), cplookup(cp, name_and_type_index)])
     
-    elif cp[index].tag == javaclass.CONSTANT_String:
+    elif cp[index].tag == classutils.CONSTANT_String:
         string_index, = struct.unpack(">H", str(cp[index].info))
         return cplookup(cp, string_index) 
 
-    elif cp[index].tag == javaclass.CONSTANT_Integer:
+    elif cp[index].tag == classutils.CONSTANT_Integer:
         int_val, = struct.unpack(">h", str(cp[index].info)) 
         return str(int_val)
 
-    elif cp[index].tag == javaclass.CONSTANT_Float:
+    elif cp[index].tag == classutils.CONSTANT_Float:
         # FIXME: 
         #
         # Tried to implement this for double and was getting incorrect 
@@ -51,11 +51,11 @@ def cplookup(cp, index):
         # format to be consistent with how double is handled.
         return ''.join(hex(b) for b in cp[index].info)
 
-    elif cp[index].tag == javaclass.CONSTANT_Long:
+    elif cp[index].tag == classutils.CONSTANT_Long:
         high_bytes, low_bytes, = struct.unpack(">ii", str(cp[index].info))
         return str(long((high_bytes << 32) + low_bytes))
 
-    elif cp[index].tag == javaclass.CONSTANT_Double:
+    elif cp[index].tag == classutils.CONSTANT_Double:
         return ''.join(hex(b) for b in cp[index].info)
     
         # FIXME: 
@@ -77,22 +77,22 @@ def cplookup(cp, index):
         #val = sign * m * 2**(e-1075)
         #return str(val)
 
-    elif cp[index].tag == javaclass.CONSTANT_NameAndType:
+    elif cp[index].tag == classutils.CONSTANT_NameAndType:
         name_index, descriptor, = struct.unpack(">HH", str(cp[index].info))
         return ":".join([cplookup(cp, name_index), cplookup(cp, descriptor)])
 
-    elif cp[index].tag == javaclass.CONSTANT_Utf8:
+    elif cp[index].tag == classutils.CONSTANT_Utf8:
         return str(cp[index].info)
 
-    elif cp[index].tag == javaclass.CONSTANT_MethodHandle:
+    elif cp[index].tag == classutils.CONSTANT_MethodHandle:
         reference_kind, reference_index, = struct.unpack(">HH", str(cp[index].info))
-        return ":".join([javaclass.REFERENCE_KINDS[reference_kind], cplookup(cp, reference_index)])
+        return ":".join([classutils.REFERENCE_KINDS[reference_kind], cplookup(cp, reference_index)])
 
-    elif cp[index].tag == javaclass.CONSTANT_MethodType:
+    elif cp[index].tag == classutils.CONSTANT_MethodType:
         descriptor_index, = struct.unpack(">H", str(cp[index].info))
         return cplookup(cp, descriptor_index)
 
-    elif cp[index].tag == javaclass.CONSTANT_InvokeDynamic:
+    elif cp[index].tag == classutils.CONSTANT_InvokeDynamic:
         boostrap_method_attr_index, name_and_type_index, = struct.unpack(">HH", str(cp[index].info))
         # FIXME (BUG): nfi about bootstrap_methods etc.
         return cplookup(cp, name_and_type_index)
