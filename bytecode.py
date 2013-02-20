@@ -1,6 +1,13 @@
-
 import struct
 import classutils
+
+def to_hex(bytes):
+    
+    bs = []
+    for b in bytes:
+        bs.append(hex(b))
+
+    return ''.join(bs)
 
 def cpindex(byte1, byte2):
     """
@@ -44,38 +51,40 @@ def cplookup(cp, index):
         return str(int_val)
 
     elif cp[index].tag == classutils.CONSTANT_Float:
-        # FIXME: 
-        #
-        # Tried to implement this for double and was getting incorrect 
-        # results. Float "should" work ok but will keep it in raw 
-        # format to be consistent with how double is handled.
-        return ''.join(hex(b) for b in cp[index].info)
+
+        bits, = struct.unpack(">h", str(cp[index].info))
+        sign = -1
+        if bits >> 31 == 0:
+            sign = 1
+        
+        e = int((bits >> 23) & 0xff);
+        m = long(bits & 0x7fffff) | 0x800000 
+        if e == 0:
+            m = long((bits & 0x7fffff) << 1)
+        val = float(sign * m * 2**(e-150))
+        return str(val)
+
+
+        return to_hex(cp[index].info)
 
     elif cp[index].tag == classutils.CONSTANT_Long:
         high_bytes, low_bytes, = struct.unpack(">ii", str(cp[index].info))
         return str(long((high_bytes << 32) + low_bytes))
 
     elif cp[index].tag == classutils.CONSTANT_Double:
-        return ''.join(hex(b) for b in cp[index].info)
-    
-        # FIXME: 
-        #
-        # Produces incorrect results. Is this due to Python 
-        # and no double precision numbers?  Will process
-        # floats and doubles in raw form.
-        #
-        #high_bytes, low_bytes, = struct.unpack(">ii", str(cp[index].info))
-        #bits = long(high_bytes << 32) + low_bytes
-        #sign = -1
-        #if bits >> 63 == 0:
-        #    sign = 1
-        #
-        #e = int((bits >> 52) & 0x7ffL);
-        #m = long(bits & 0xfffffffffffffL) << 1
-        #if e == 0:
-        #    m = long((bits & 0xfffffffffffffL) | 0x10000000000000L)
-        #val = sign * m * 2**(e-1075)
-        #return str(val)
+
+        high_bytes, low_bytes, = struct.unpack(">ii", str(cp[index].info))
+        bits = long(high_bytes << 32) + low_bytes
+        sign = -1
+        if bits >> 63 == 0:
+            sign = 1
+        
+        e = int((bits >> 52) & 0x7ffL);
+        m = (bits & 0xfffffffffffffL) | 0x10000000000000L
+        if e == 0:
+            m = bits & 0xfffffffffffffL << 1
+        val = sign * m * 2**(e-1075)
+        return str(val)
 
     elif cp[index].tag == classutils.CONSTANT_NameAndType:
         name_index, descriptor, = struct.unpack(">HH", str(cp[index].info))
@@ -94,7 +103,7 @@ def cplookup(cp, index):
 
     elif cp[index].tag == classutils.CONSTANT_InvokeDynamic:
         boostrap_method_attr_index, name_and_type_index, = struct.unpack(">HH", str(cp[index].info))
-        # FIXME (BUG): nfi about bootstrap_methods etc.
+        # FIXME (BUG): bootstrap_methods etc.
         return cplookup(cp, name_and_type_index)
 
     else: 
@@ -1285,6 +1294,7 @@ def interpret(cp, code):
     registers = {}
     reset(registers)
     codelen = len(code)
+
     while pc(registers) < codelen:
         op = code[pc(registers)];
         yield interpreter[op](cp, code, registers)
