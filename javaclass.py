@@ -65,7 +65,7 @@ class JavaClass(object):
 
             for code in method["code"]:
                 for op in code:
-                    methods += "\t %s" % (bytecode.opcode_str.get(op.get_opcode()))
+                    methods += "\t %s" % (str(op))
                     if op.get_value() != None: 
                         methods += "( %s )" % str(op.get_value())
 
